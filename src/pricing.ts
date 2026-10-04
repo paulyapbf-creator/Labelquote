@@ -33,10 +33,11 @@ export function estimatePrice(input: QuoteInput): PriceEstimate | null {
   const sorted        = [...cfg.qtyBreaks].sort((a, b) => b.min - a.min);
   const qtyMulti      = sorted.find(b => quantity >= b.min)?.multiplier ?? 1.5;
   const unitPrice     = Math.max((materialCost + inkCost + finishingCost) * shapeMulti * qtyMulti, 0.001);
-  const setupFee      = cfg.setupFee;
-  const dieFee        = shape === 'die-cut' ? cfg.dieFee : 0;
+  const setupFee      = cfg.setupFeeEnabled ? cfg.setupFee : 0;
+  const dieFee        = (shape === 'die-cut' && cfg.dieFeeEnabled) ? cfg.dieFee : 0;
   const subtotal      = unitPrice * quantity;
-  const total         = Math.max(subtotal + setupFee + dieFee, cfg.minOrderTotal);
+  const minOrder      = cfg.minOrderEnabled ? cfg.minOrderTotal : 0;
+  const total         = Math.max(subtotal + setupFee + dieFee, minOrder);
   return { unitPrice, setupFee, dieFee, subtotal, total };
 }
 
@@ -61,10 +62,11 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     0.001
   );
 
-  const setupFee = cfg.setupFee;
-  const dieFee   = shape === 'die-cut' ? cfg.dieFee : 0;
+  const setupFee = cfg.setupFeeEnabled ? cfg.setupFee : 0;
+  const dieFee   = (shape === 'die-cut' && cfg.dieFeeEnabled) ? cfg.dieFee : 0;
   const subtotal = unitPrice * quantity;
-  const total    = Math.max(subtotal + setupFee + dieFee, cfg.minOrderTotal);
+  const minOrder = cfg.minOrderEnabled ? cfg.minOrderTotal : 0;
+  const total    = Math.max(subtotal + setupFee + dieFee, minOrder);
 
   const now = new Date();
   quoteCounter++;

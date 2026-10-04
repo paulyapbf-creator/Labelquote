@@ -9,8 +9,11 @@ export interface PricingConfig {
   shapes:           Record<string, { name: string; multiplier: number }>;
   fullColorRate:    number;
   setupFee:         number;
+  setupFeeEnabled:  boolean;
   dieFee:           number;
+  dieFeeEnabled:    boolean;
   minOrderTotal:    number;
+  minOrderEnabled:  boolean;
   minQuantity:      number;
   qtyBreaks:        { min: number; multiplier: number }[];
   quoteValidityDays: number;

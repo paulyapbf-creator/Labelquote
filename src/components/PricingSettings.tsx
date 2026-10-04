@@ -82,21 +82,27 @@ export function PricingSettings({ onBack: _onBack }: Props) {
 
       {/* Fixed fees */}
       <Section title="Fixed Fees">
-        <InlineRow label="Setup / Plate Fee (RM)">
-          <input type="number" value={cfg.setupFee} min="0" step="1"
-            onChange={e => setFixed('setupFee', Number(e.target.value))}
-            className={numCls} />
-        </InlineRow>
-        <InlineRow label="Die-Cut Fee (RM)">
-          <input type="number" value={cfg.dieFee} min="0" step="1"
-            onChange={e => setFixed('dieFee', Number(e.target.value))}
-            className={numCls} />
-        </InlineRow>
-        <InlineRow label="Min. Order Total (RM)">
-          <input type="number" value={cfg.minOrderTotal} min="0" step="1"
-            onChange={e => setFixed('minOrderTotal', Number(e.target.value))}
-            className={numCls} />
-        </InlineRow>
+        <FeeRow
+          label="Setup / Plate Fee"
+          enabled={cfg.setupFeeEnabled}
+          amount={cfg.setupFee}
+          onToggle={v => setFixed('setupFeeEnabled', v)}
+          onAmount={v => setFixed('setupFee', v)}
+        />
+        <FeeRow
+          label="Die-Cut Fee"
+          enabled={cfg.dieFeeEnabled}
+          amount={cfg.dieFee}
+          onToggle={v => setFixed('dieFeeEnabled', v)}
+          onAmount={v => setFixed('dieFee', v)}
+        />
+        <FeeRow
+          label="Min. Order Total"
+          enabled={cfg.minOrderEnabled}
+          amount={cfg.minOrderTotal}
+          onToggle={v => setFixed('minOrderEnabled', v)}
+          onAmount={v => setFixed('minOrderTotal', v)}
+        />
         <InlineRow label="Min. Quantity (pcs)">
           <input type="number" value={cfg.minQuantity} min="1" step="1"
             onChange={e => setFixed('minQuantity', Number(e.target.value))}
@@ -223,6 +229,33 @@ function InlineRow({ label, children }: { label: string; children: React.ReactNo
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm text-gray-700 flex-1 leading-tight">{label}</span>
       <div className="w-28 shrink-0">{children}</div>
+    </div>
+  );
+}
+
+function FeeRow({ label, enabled, amount, onToggle, onAmount }: {
+  label: string;
+  enabled: boolean;
+  amount: number;
+  onToggle: (v: boolean) => void;
+  onAmount: (v: number) => void;
+}) {
+  return (
+    <div className={`flex items-center gap-3 py-1 rounded-xl transition-opacity ${!enabled ? 'opacity-50' : ''}`}>
+      <button type="button" onClick={() => onToggle(!enabled)}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+          enabled ? 'bg-blue-600' : 'bg-gray-200'
+        }`}>
+        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+          enabled ? 'translate-x-6' : 'translate-x-1'
+        }`} />
+      </button>
+      <span className="text-sm text-gray-700 flex-1 leading-tight">{label} (RM)</span>
+      <div className="w-24 shrink-0">
+        <input type="number" value={amount} min="0" step="1" disabled={!enabled}
+          onChange={e => onAmount(Number(e.target.value))}
+          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-right disabled:bg-gray-50 disabled:cursor-not-allowed" />
+      </div>
     </div>
   );
 }

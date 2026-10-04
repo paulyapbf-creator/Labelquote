@@ -99,8 +99,11 @@ const PRICING_DEFAULTS: PricingConfig = {
   },
   fullColorRate:     25,
   setupFee:          80,
+  setupFeeEnabled:   true,
   dieFee:            50,
+  dieFeeEnabled:     true,
   minOrderTotal:     50,
+  minOrderEnabled:   true,
   minQuantity:       100,
   quoteValidityDays: 30,
   qtyBreaks: [
