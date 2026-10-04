@@ -12,12 +12,17 @@ export function loadQuotes(): SavedQuote[] {
     const quotes = JSON.parse(raw) as SavedQuote[];
     // Migrate old quotes: quantity (number) → quantities ([number])
     return quotes.map(q => {
-      const inp = q.input as QuoteInput & { quantity?: number };
+      let inp = q.input as QuoteInput & { quantity?: number };
+      // Migrate: quantity (number) → quantities ([number])
       if (inp.quantity !== undefined && !inp.quantities) {
         const { quantity, ...rest } = inp;
-        return { ...q, input: { ...rest, quantities: [quantity] } };
+        inp = { ...rest, quantities: [quantity] } as QuoteInput;
       }
-      return q;
+      // Migrate: missing quantityUnit defaults to 'pcs'
+      if (!inp.quantityUnit) {
+        inp = { ...inp, quantityUnit: 'pcs' };
+      }
+      return { ...q, input: inp };
     });
   } catch {
     return [];

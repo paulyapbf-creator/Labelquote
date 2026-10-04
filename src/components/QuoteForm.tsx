@@ -25,7 +25,8 @@ const FINISHINGS: { value: Finishing; label: string; sub: string }[] = [
   { value: 'matte-lam', label: 'Matte', sub: 'Soft finish'   },
 ];
 
-const QTY_PRESETS = [500, 1000, 2500, 5000, 10000];
+const QTY_PRESETS_PCS   = [500, 1000, 2500, 5000, 10000];
+const QTY_PRESETS_ROLLS = [1, 2, 5, 10, 25, 50];
 const PACKING_PRESETS = [250, 500, 1000, 2000];
 const CORE_OPTIONS = ['1"', '1.5"', '3"'];
 
@@ -37,6 +38,7 @@ const DEFAULT: QuoteInput = {
   shape: 'rectangle',
   material: 'gloss-paper',
   quantities: [1000],
+  quantityUnit: 'pcs',
   fullColor: true,
   finishing: 'none',
   printerModel: '',
@@ -63,26 +65,45 @@ export function QuoteForm({ initial, onSubmit }: Props) {
     setErrors(prev => ({ ...prev, [key]: undefined }));
   }
 
-  function toggleQty(qty: number) {
+  function toggleQty(pcs: number) {
     setForm(prev => {
-      const exists = prev.quantities.includes(qty);
+      const exists = prev.quantities.includes(pcs);
       const next = exists
-        ? prev.quantities.filter(q => q !== qty)
-        : [...prev.quantities, qty].sort((a, b) => a - b);
+        ? prev.quantities.filter(q => q !== pcs)
+        : [...prev.quantities, pcs].sort((a, b) => a - b);
       return { ...prev, quantities: next };
     });
     setErrors(prev => ({ ...prev, quantities: undefined }));
   }
 
-  function addCustomQty(qty: number) {
-    if (!qty || qty < 1) return;
+  function addCustomQty(rawValue: number) {
+    if (!rawValue || rawValue < 1) return;
+    const pcs = form.quantityUnit === 'rolls' && form.packingPcsPerRoll > 0
+      ? rawValue * form.packingPcsPerRoll
+      : rawValue;
     setForm(prev => ({
       ...prev,
-      quantities: prev.quantities.includes(qty)
+      quantities: prev.quantities.includes(pcs)
         ? prev.quantities
-        : [...prev.quantities, qty].sort((a, b) => a - b),
+        : [...prev.quantities, pcs].sort((a, b) => a - b),
     }));
     setErrors(prev => ({ ...prev, quantities: undefined }));
+  }
+
+  function togglePresetRolls(rolls: number) {
+    const pcs = rolls * (form.packingPcsPerRoll || 0);
+    if (pcs < 1) return;
+    toggleQty(pcs);
+  }
+
+  function qtyLabel(pcs: number): string {
+    if (form.quantityUnit === 'rolls' && form.packingPcsPerRoll > 0) {
+      const rolls = pcs / form.packingPcsPerRoll;
+      return Number.isInteger(rolls)
+        ? `${rolls} roll${rolls !== 1 ? 's' : ''}`
+        : `${pcs.toLocaleString()} pcs`;
+    }
+    return `${pcs.toLocaleString()} pcs`;
   }
 
   function validate(): boolean {
@@ -196,30 +217,87 @@ export function QuoteForm({ initial, onSubmit }: Props) {
 
       {/* Quantity */}
       <Section icon="🔢" title="Quantity Tiers">
-        <p className="text-xs text-gray-400 -mt-1">Select one or more quantities to include in this quote.</p>
-        <div className="flex flex-wrap gap-2">
-          {QTY_PRESETS.map(q => (
-            <button key={q} type="button" onClick={() => toggleQty(q)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                form.quantities.includes(q)
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'
-              }`}>
-              {q.toLocaleString()}
+        {/* Unit toggle */}
+        <div className="flex items-center gap-2 -mt-1">
+          <span className="text-xs text-gray-500">Select by:</span>
+          <div className="flex rounded-xl border border-gray-200 overflow-hidden text-xs font-semibold">
+            <button type="button"
+              onClick={() => set('quantityUnit', 'pcs')}
+              className={`px-3 py-1.5 transition-colors ${form.quantityUnit === 'pcs' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+              Pieces
             </button>
-          ))}
+            <button type="button"
+              onClick={() => set('quantityUnit', 'rolls')}
+              className={`px-3 py-1.5 transition-colors ${form.quantityUnit === 'rolls' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+              Rolls
+            </button>
+          </div>
+          {form.quantityUnit === 'rolls' && form.packingPcsPerRoll > 0 && (
+            <span className="text-xs text-gray-400">1 roll = {form.packingPcsPerRoll.toLocaleString()} pcs</span>
+          )}
+          {form.quantityUnit === 'rolls' && !form.packingPcsPerRoll && (
+            <span className="text-xs text-amber-500">Set packing (pcs/roll) below first</span>
+          )}
         </div>
-        <CustomQtyInput onAdd={addCustomQty} existing={form.quantities} />
+
+        {/* Presets */}
+        <div className="flex flex-wrap gap-2">
+          {form.quantityUnit === 'pcs'
+            ? QTY_PRESETS_PCS.map(q => (
+                <button key={q} type="button" onClick={() => toggleQty(q)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    form.quantities.includes(q)
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'
+                  }`}>
+                  {q.toLocaleString()}
+                </button>
+              ))
+            : QTY_PRESETS_ROLLS.map(r => {
+                const pcs = r * (form.packingPcsPerRoll || 0);
+                const active = pcs > 0 && form.quantities.includes(pcs);
+                return (
+                  <button key={r} type="button"
+                    onClick={() => togglePresetRolls(r)}
+                    disabled={!form.packingPcsPerRoll}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                      active
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'
+                    }`}>
+                    {r} roll{r !== 1 ? 's' : ''}
+                    {form.packingPcsPerRoll > 0 && (
+                      <span className={`ml-1 ${active ? 'text-blue-200' : 'text-gray-400'}`}>
+                        ({(r * form.packingPcsPerRoll).toLocaleString()})
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+          }
+        </div>
+
+        <CustomQtyInput
+          unit={form.quantityUnit}
+          onAdd={addCustomQty}
+          existing={form.quantities}
+          packingPcsPerRoll={form.packingPcsPerRoll}
+        />
+
         {(errors as Record<string, string>).quantities && (
           <p className="text-xs text-red-500">{(errors as Record<string, string>).quantities}</p>
         )}
+
         {form.quantities.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-1">
             {form.quantities.map(q => (
               <span key={q} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-200">
-                {q.toLocaleString()}
+                {qtyLabel(q)}
+                {form.quantityUnit === 'rolls' && form.packingPcsPerRoll > 0 && (
+                  <span className="text-blue-400 font-normal">({q.toLocaleString()} pcs)</span>
+                )}
                 <button type="button" onClick={() => toggleQty(q)}
-                  className="text-blue-400 hover:text-blue-700 leading-none">×</button>
+                  className="text-blue-400 hover:text-blue-700 leading-none ml-0.5">×</button>
               </span>
             ))}
           </div>
@@ -377,25 +455,30 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   );
 }
 
-function CustomQtyInput({ onAdd, existing }: { onAdd: (qty: number) => void; existing: number[] }) {
+function CustomQtyInput({ onAdd, unit, packingPcsPerRoll }: {
+  onAdd: (qty: number) => void;
+  existing: number[];
+  unit: 'pcs' | 'rolls';
+  packingPcsPerRoll: number;
+}) {
   const [val, setVal] = useState('');
+  const disabled = unit === 'rolls' && !packingPcsPerRoll;
   function handleAdd() {
     const n = Number(val);
-    if (n >= 1 && !existing.includes(n)) {
-      onAdd(n);
-      setVal('');
-    }
+    if (n >= 1) { onAdd(n); setVal(''); }
   }
+  const placeholder = unit === 'rolls' ? 'Custom rolls…' : 'Custom qty…';
   return (
     <div className="flex gap-2 mt-1">
       <input
-        type="number" value={val} min="1" placeholder="Custom qty…"
+        type="number" value={val} min="1" placeholder={placeholder}
+        disabled={disabled}
         onChange={e => setVal(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
-        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-40"
       />
-      <button type="button" onClick={handleAdd}
-        className="px-3 py-2 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors whitespace-nowrap">
+      <button type="button" onClick={handleAdd} disabled={disabled}
+        className="px-3 py-2 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors whitespace-nowrap disabled:opacity-40">
         + Add
       </button>
     </div>

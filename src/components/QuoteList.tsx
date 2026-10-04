@@ -148,11 +148,20 @@ export function QuoteList({ quotes, onNew, onOpen }: Props) {
                 </div>
               </div>
               <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2.5">
-                <Tag icon="📦">{
-                  q.input.quantities.length > 1
-                    ? `${Math.min(...q.input.quantities).toLocaleString()}–${Math.max(...q.input.quantities).toLocaleString()} pcs`
-                    : `${(q.input.quantities[0] ?? 0).toLocaleString()} pcs`
-                }</Tag>
+                <Tag icon="📦">{(() => {
+                  const { quantities, quantityUnit, packingPcsPerRoll } = q.input;
+                  const byRolls = quantityUnit === 'rolls' && packingPcsPerRoll > 0;
+                  if (byRolls) {
+                    const rolls = quantities.map(p => p / packingPcsPerRoll).filter(r => Number.isInteger(r));
+                    if (rolls.length === quantities.length) {
+                      const min = Math.min(...rolls), max = Math.max(...rolls);
+                      return quantities.length > 1 ? `${min}–${max} rolls` : `${min} roll${min !== 1 ? 's' : ''}`;
+                    }
+                  }
+                  return quantities.length > 1
+                    ? `${Math.min(...quantities).toLocaleString()}–${Math.max(...quantities).toLocaleString()} pcs`
+                    : `${(quantities[0] ?? 0).toLocaleString()} pcs`;
+                })()}</Tag>
                 <Tag icon="📐">{q.input.labelWidth}×{q.input.labelHeight}mm</Tag>
                 <Tag icon="🗓️">{q.result.date}</Tag>
               </div>

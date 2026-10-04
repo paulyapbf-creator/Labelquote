@@ -72,7 +72,14 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
           <SpecItem label="Material"   value={getMaterialName(input.material)} />
           <SpecItem label="Color"      value={input.fullColor ? 'Full Color (CMYK)' : 'Single Color'} />
           <SpecItem label="Finishing"  value={getFinishingName(input.finishing)} />
-          <SpecItem label="Quantities" value={input.quantities.map(q => q.toLocaleString()).join(', ') + ' pcs'} />
+          <SpecItem label="Quantities" value={
+            input.quantityUnit === 'rolls' && input.packingPcsPerRoll > 0
+              ? input.quantities.map(q => {
+                  const r = q / input.packingPcsPerRoll;
+                  return Number.isInteger(r) ? `${r} roll${r !== 1 ? 's' : ''} (${q.toLocaleString()} pcs)` : `${q.toLocaleString()} pcs`;
+                }).join(', ')
+              : input.quantities.map(q => q.toLocaleString()).join(', ') + ' pcs'
+          } />
           <SpecItem label="Printer"    value={input.printerModel || '—'} />
           <SpecItem label="Core"       value={input.labelCore || '—'} />
           <SpecItem label="Packing"    value={input.packingPcsPerRoll ? `${input.packingPcsPerRoll.toLocaleString()} pcs/roll` : '—'} />
@@ -101,7 +108,12 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
             <tbody>
               {result.breakdowns.map(bd => (
                 <tr key={bd.quantity} className="border-b border-gray-50 last:border-0">
-                  <td className="px-3 py-2.5 font-semibold text-gray-800">{bd.quantity.toLocaleString()} pcs</td>
+                  <td className="px-3 py-2.5 font-semibold text-gray-800">
+                    {input.quantityUnit === 'rolls' && input.packingPcsPerRoll > 0 && Number.isInteger(bd.quantity / input.packingPcsPerRoll)
+                      ? <>{bd.quantity / input.packingPcsPerRoll} rolls <span className="text-xs text-gray-400 font-normal">({bd.quantity.toLocaleString()} pcs)</span></>
+                      : <>{bd.quantity.toLocaleString()} pcs</>
+                    }
+                  </td>
                   <td className="px-3 py-2.5 text-right text-gray-500 font-mono text-xs">RM {bd.unitPrice.toFixed(4)}</td>
                   <td className="px-3 py-2.5 text-right text-gray-600">RM {bd.subtotal.toFixed(2)}</td>
                   <td className="px-3 py-2.5 text-right font-bold text-blue-600">RM {bd.total.toFixed(2)}</td>

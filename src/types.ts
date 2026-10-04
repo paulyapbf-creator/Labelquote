@@ -38,6 +38,7 @@ export interface QuoteInput {
   shape: Shape;
   material: Material;
   quantities: number[];
+  quantityUnit: 'pcs' | 'rolls';
   fullColor: boolean;
   finishing: Finishing;
   printerModel: string;

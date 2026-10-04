@@ -103,7 +103,16 @@ export function generatePDF(input: QuoteInput, result: QuoteResult): void {
       ['Material',      getMaterialName(input.material)],
       ['Color',         input.fullColor ? 'Full Color (CMYK)' : 'Single Color'],
       ['Finishing',     getFinishingName(input.finishing)],
-      ['Quantity',      input.quantities.map(q => q.toLocaleString()).join(', ') + ' pcs'],
+      ['Quantity', (() => {
+        const byRolls = input.quantityUnit === 'rolls' && input.packingPcsPerRoll > 0;
+        return input.quantities.map(q => {
+          if (byRolls) {
+            const r = q / input.packingPcsPerRoll;
+            if (Number.isInteger(r)) return `${r} roll${r !== 1 ? 's' : ''} (${q.toLocaleString()} pcs)`;
+          }
+          return `${q.toLocaleString()} pcs`;
+        }).join(', ');
+      })()],
       ['Printer Model', input.printerModel || '—'],
       ['Label Core',    input.labelCore || '—'],
       ['Packing',       input.packingPcsPerRoll ? `${input.packingPcsPerRoll.toLocaleString()} pcs / roll` : '—'],
@@ -136,12 +145,14 @@ export function generatePDF(input: QuoteInput, result: QuoteResult): void {
     feeRows.push(['Custom Die-Cut Fee', '', '', `RM ${result.dieFee.toFixed(2)}`]);
   }
 
-  const pricingRows: string[][] = result.breakdowns.map(bd => [
-    labelDesc,
-    bd.quantity.toLocaleString(),
-    `RM ${bd.unitPrice.toFixed(4)}`,
-    `RM ${bd.total.toFixed(2)}`,
-  ]);
+  const pricingRows: string[][] = result.breakdowns.map(bd => {
+    const byRolls = input.quantityUnit === 'rolls' && input.packingPcsPerRoll > 0;
+    const r = bd.quantity / input.packingPcsPerRoll;
+    const qtyCell = byRolls && Number.isInteger(r)
+      ? `${r} roll${r !== 1 ? 's' : ''}\n(${bd.quantity.toLocaleString()} pcs)`
+      : bd.quantity.toLocaleString();
+    return [labelDesc, qtyCell, `RM ${bd.unitPrice.toFixed(4)}`, `RM ${bd.total.toFixed(2)}`];
+  });
 
   autoTable(doc, {
     startY: y,
