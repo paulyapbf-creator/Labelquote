@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import type { QuoteInput, Shape, Material, Finishing } from '../types';
+import { Fragment, useState, useMemo } from 'react';
+import type { QuoteInput, Shape, Material, Finishing, QtyBreakdown } from '../types';
 import { estimatePrice } from '../pricing';
 
 const SHAPES: { value: Shape; label: string; icon: string }[] = [
@@ -36,7 +36,7 @@ const DEFAULT: QuoteInput = {
   labelHeight: 50,
   shape: 'rectangle',
   material: 'gloss-paper',
-  quantity: 1000,
+  quantities: [1000],
   fullColor: true,
   finishing: 'none',
   printerModel: '',
@@ -63,12 +63,34 @@ export function QuoteForm({ initial, onSubmit }: Props) {
     setErrors(prev => ({ ...prev, [key]: undefined }));
   }
 
+  function toggleQty(qty: number) {
+    setForm(prev => {
+      const exists = prev.quantities.includes(qty);
+      const next = exists
+        ? prev.quantities.filter(q => q !== qty)
+        : [...prev.quantities, qty].sort((a, b) => a - b);
+      return { ...prev, quantities: next };
+    });
+    setErrors(prev => ({ ...prev, quantities: undefined }));
+  }
+
+  function addCustomQty(qty: number) {
+    if (!qty || qty < 1) return;
+    setForm(prev => ({
+      ...prev,
+      quantities: prev.quantities.includes(qty)
+        ? prev.quantities
+        : [...prev.quantities, qty].sort((a, b) => a - b),
+    }));
+    setErrors(prev => ({ ...prev, quantities: undefined }));
+  }
+
   function validate(): boolean {
     const e: Errors = {};
     if (!form.customerName.trim())               e.customerName = 'Required';
     if (!form.labelWidth  || form.labelWidth < 1)  e.labelWidth  = 'Enter valid width';
     if (!form.labelHeight || form.labelHeight < 1) e.labelHeight = 'Enter valid height';
-    if (!form.quantity    || form.quantity < 100)  e.quantity    = 'Minimum 100';
+    if (form.quantities.length === 0)              (e as Record<string, string>).quantities = 'Select at least one quantity';
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -173,18 +195,13 @@ export function QuoteForm({ initial, onSubmit }: Props) {
       </Section>
 
       {/* Quantity */}
-      <Section icon="🔢" title="Quantity">
-        <Field label="Number of labels" error={errors.quantity}>
-          <input type="number" value={form.quantity || ''}
-            onChange={e => set('quantity', Number(e.target.value))}
-            placeholder="e.g. 1000" min="100"
-            className={`${inputCls(errors.quantity)} text-lg font-semibold`} />
-        </Field>
+      <Section icon="🔢" title="Quantity Tiers">
+        <p className="text-xs text-gray-400 -mt-1">Select one or more quantities to include in this quote.</p>
         <div className="flex flex-wrap gap-2">
           {QTY_PRESETS.map(q => (
-            <button key={q} type="button" onClick={() => set('quantity', q)}
+            <button key={q} type="button" onClick={() => toggleQty(q)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                form.quantity === q
+                form.quantities.includes(q)
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'
               }`}>
@@ -192,6 +209,21 @@ export function QuoteForm({ initial, onSubmit }: Props) {
             </button>
           ))}
         </div>
+        <CustomQtyInput onAdd={addCustomQty} existing={form.quantities} />
+        {(errors as Record<string, string>).quantities && (
+          <p className="text-xs text-red-500">{(errors as Record<string, string>).quantities}</p>
+        )}
+        {form.quantities.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {form.quantities.map(q => (
+              <span key={q} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-200">
+                {q.toLocaleString()}
+                <button type="button" onClick={() => toggleQty(q)}
+                  className="text-blue-400 hover:text-blue-700 leading-none">×</button>
+              </span>
+            ))}
+          </div>
+        )}
       </Section>
 
       {/* Roll Specifications */}
@@ -292,31 +324,24 @@ export function QuoteForm({ initial, onSubmit }: Props) {
       </Section>
 
       {/* Live Estimate */}
-      {estimate && (
+      {estimate && estimate.length > 0 && (
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-4 text-white shadow-md">
-          <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider mb-2">Live Estimate</p>
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="text-blue-100">
-                {form.quantity.toLocaleString()} pcs × RM {estimate.unitPrice.toFixed(4)}
-              </span>
-              <span>RM {estimate.subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-blue-100">Setup fee</span>
-              <span>RM {estimate.setupFee.toFixed(2)}</span>
-            </div>
-            {estimate.dieFee > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-blue-100">Die-cut fee</span>
-                <span>RM {estimate.dieFee.toFixed(2)}</span>
-              </div>
-            )}
+          <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider mb-3">Live Estimate</p>
+          <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1.5 text-sm">
+            <span className="text-xs text-blue-300 font-semibold">Quantity</span>
+            <span className="text-xs text-blue-300 font-semibold text-right">Unit Price</span>
+            <span className="text-xs text-blue-300 font-semibold text-right">Total</span>
+            {estimate.map((bd: QtyBreakdown) => (
+              <Fragment key={bd.quantity}>
+                <span className="text-blue-100">{bd.quantity.toLocaleString()} pcs</span>
+                <span className="text-right font-mono">RM {bd.unitPrice.toFixed(4)}</span>
+                <span className="text-right font-semibold">RM {bd.total.toFixed(2)}</span>
+              </Fragment>
+            ))}
           </div>
-          <div className="border-t border-blue-500 mt-2.5 pt-2.5 flex justify-between items-center">
-            <span className="font-semibold">Estimated Total</span>
-            <span className="text-2xl font-bold">RM {estimate.total.toFixed(2)}</span>
-          </div>
+          {estimate[0].total > estimate[0].subtotal && (
+            <p className="text-xs text-blue-300 mt-2">* Total includes setup / one-time fees</p>
+          )}
         </div>
       )}
 
@@ -348,6 +373,31 @@ function Field({ label, error, children }: { label: string; error?: string; chil
       <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
       {children}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function CustomQtyInput({ onAdd, existing }: { onAdd: (qty: number) => void; existing: number[] }) {
+  const [val, setVal] = useState('');
+  function handleAdd() {
+    const n = Number(val);
+    if (n >= 1 && !existing.includes(n)) {
+      onAdd(n);
+      setVal('');
+    }
+  }
+  return (
+    <div className="flex gap-2 mt-1">
+      <input
+        type="number" value={val} min="1" placeholder="Custom qty…"
+        onChange={e => setVal(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
+        className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+      />
+      <button type="button" onClick={handleAdd}
+        className="px-3 py-2 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors whitespace-nowrap">
+        + Add
+      </button>
     </div>
   );
 }

@@ -34,8 +34,11 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
             {input.customerContact && <p className="text-blue-200 text-sm mt-0.5">{input.customerContact}</p>}
           </div>
           <div className="text-right shrink-0 ml-4">
-            <p className="text-blue-200 text-xs">Total</p>
-            <p className="text-3xl font-bold">RM {result.total.toFixed(2)}</p>
+            <p className="text-blue-200 text-xs">From</p>
+            <p className="text-3xl font-bold">RM {Math.min(...result.breakdowns.map(b => b.total)).toFixed(2)}</p>
+            {result.breakdowns.length > 1 && (
+              <p className="text-blue-200 text-xs mt-0.5">{result.breakdowns.length} qty tiers</p>
+            )}
           </div>
         </div>
         <div className="flex gap-3 mt-4 text-xs text-blue-200">
@@ -69,7 +72,7 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
           <SpecItem label="Material"   value={getMaterialName(input.material)} />
           <SpecItem label="Color"      value={input.fullColor ? 'Full Color (CMYK)' : 'Single Color'} />
           <SpecItem label="Finishing"  value={getFinishingName(input.finishing)} />
-          <SpecItem label="Quantity"   value={`${input.quantity.toLocaleString()} pcs`} />
+          <SpecItem label="Quantities" value={input.quantities.map(q => q.toLocaleString()).join(', ') + ' pcs'} />
           <SpecItem label="Printer"    value={input.printerModel || '—'} />
           <SpecItem label="Core"       value={input.labelCore || '—'} />
           <SpecItem label="Packing"    value={input.packingPcsPerRoll ? `${input.packingPcsPerRoll.toLocaleString()} pcs/roll` : '—'} />
@@ -78,22 +81,34 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
 
       {/* Pricing */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5">Pricing Breakdown</p>
-        <PricingLine
-          label={`Printing × ${input.quantity.toLocaleString()} pcs`}
-          sub={`RM ${result.unitPrice.toFixed(4)} per pc`}
-          amount={`RM ${result.subtotal.toFixed(2)}`} />
-        <PricingLine
-          label="Setup / Plate Fee"
-          amount={`RM ${result.setupFee.toFixed(2)}`} />
-        {result.dieFee > 0 && (
-          <PricingLine
-            label="Custom Die-Cut Fee"
-            amount={`RM ${result.dieFee.toFixed(2)}`} />
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Pricing Breakdown</p>
+        {result.setupFee > 0 && (
+          <PricingLine label="Setup / Plate Fee" amount={`RM ${result.setupFee.toFixed(2)}`} />
         )}
-        <div className="mt-3 pt-3 border-t-2 border-blue-100 flex justify-between items-center">
-          <span className="font-bold text-gray-800">TOTAL</span>
-          <span className="text-2xl font-bold text-blue-600">RM {result.total.toFixed(2)}</span>
+        {result.dieFee > 0 && (
+          <PricingLine label="Custom Die-Cut Fee" amount={`RM ${result.dieFee.toFixed(2)}`} />
+        )}
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                <th className="text-left px-3 py-2 rounded-l-lg">Quantity</th>
+                <th className="text-right px-3 py-2">Unit Price</th>
+                <th className="text-right px-3 py-2">Subtotal</th>
+                <th className="text-right px-3 py-2 rounded-r-lg">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.breakdowns.map(bd => (
+                <tr key={bd.quantity} className="border-b border-gray-50 last:border-0">
+                  <td className="px-3 py-2.5 font-semibold text-gray-800">{bd.quantity.toLocaleString()} pcs</td>
+                  <td className="px-3 py-2.5 text-right text-gray-500 font-mono text-xs">RM {bd.unitPrice.toFixed(4)}</td>
+                  <td className="px-3 py-2.5 text-right text-gray-600">RM {bd.subtotal.toFixed(2)}</td>
+                  <td className="px-3 py-2.5 text-right font-bold text-blue-600">RM {bd.total.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

@@ -37,7 +37,7 @@ export interface QuoteInput {
   labelHeight: number;
   shape: Shape;
   material: Material;
-  quantity: number;
+  quantities: number[];
   fullColor: boolean;
   finishing: Finishing;
   printerModel: string;
@@ -46,15 +46,20 @@ export interface QuoteInput {
   notes: string;
 }
 
+export interface QtyBreakdown {
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  total: number;
+}
+
 export interface QuoteResult {
   quoteNo: string;
   date: string;
   validUntil: string;
-  unitPrice: number;
   setupFee: number;
   dieFee: number;
-  subtotal: number;
-  total: number;
+  breakdowns: QtyBreakdown[];
 }
 
 export interface SavedQuote {

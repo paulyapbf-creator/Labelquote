@@ -103,7 +103,7 @@ export function generatePDF(input: QuoteInput, result: QuoteResult): void {
       ['Material',      getMaterialName(input.material)],
       ['Color',         input.fullColor ? 'Full Color (CMYK)' : 'Single Color'],
       ['Finishing',     getFinishingName(input.finishing)],
-      ['Quantity',      `${input.quantity.toLocaleString()} labels`],
+      ['Quantity',      input.quantities.map(q => q.toLocaleString()).join(', ') + ' pcs'],
       ['Printer Model', input.printerModel || '—'],
       ['Label Core',    input.labelCore || '—'],
       ['Packing',       input.packingPcsPerRoll ? `${input.packingPcsPerRoll.toLocaleString()} pcs / roll` : '—'],
@@ -125,38 +125,32 @@ export function generatePDF(input: QuoteInput, result: QuoteResult): void {
   doc.text('PRICING BREAKDOWN', M, y);
   y += 2;
 
-  const rows: string[][] = [
-    [
-      `Label Printing — ${input.labelWidth}×${input.labelHeight}mm, ${getMaterialName(input.material)}`,
-      input.quantity.toLocaleString(),
-      `RM ${result.unitPrice.toFixed(4)}`,
-      `RM ${result.subtotal.toFixed(2)}`,
-    ],
-    [
-      'Setup / Plate Fee',
-      '1',
-      `RM ${result.setupFee.toFixed(2)}`,
-      `RM ${result.setupFee.toFixed(2)}`,
-    ],
-  ];
+  const labelDesc = `${input.labelWidth}×${input.labelHeight}mm · ${getMaterialName(input.material)}`;
 
-  if (result.dieFee > 0) {
-    rows.push([
-      'Custom Die-Cut Fee',
-      '1',
-      `RM ${result.dieFee.toFixed(2)}`,
-      `RM ${result.dieFee.toFixed(2)}`,
-    ]);
+  // Fixed fees row (if any)
+  const feeRows: string[][] = [];
+  if (result.setupFee > 0) {
+    feeRows.push(['Setup / Plate Fee', '', '', `RM ${result.setupFee.toFixed(2)}`]);
   }
+  if (result.dieFee > 0) {
+    feeRows.push(['Custom Die-Cut Fee', '', '', `RM ${result.dieFee.toFixed(2)}`]);
+  }
+
+  const pricingRows: string[][] = result.breakdowns.map(bd => [
+    labelDesc,
+    bd.quantity.toLocaleString(),
+    `RM ${bd.unitPrice.toFixed(4)}`,
+    `RM ${bd.total.toFixed(2)}`,
+  ]);
 
   autoTable(doc, {
     startY: y,
     margin: { left: M, right: M },
-    head: [['Description', 'Qty', 'Unit Price', 'Amount']],
-    body: rows,
+    head: [['Description', 'Qty', 'Unit Price', 'Total']],
+    body: [...pricingRows, ...feeRows],
     columnStyles: {
       0: { cellWidth: 'auto' },
-      1: { cellWidth: 16, halign: 'center' },
+      1: { cellWidth: 18, halign: 'center' },
       2: { cellWidth: 28, halign: 'right' },
       3: { cellWidth: 28, halign: 'right' },
     },
@@ -172,15 +166,20 @@ export function generatePDF(input: QuoteInput, result: QuoteResult): void {
 
   y = doc.lastAutoTable.finalY;
 
-  // Total bar
-  const totalW = 58;
+  // Price range bar
+  const minTotal = Math.min(...result.breakdowns.map(b => b.total));
+  const maxTotal = Math.max(...result.breakdowns.map(b => b.total));
+  const totalLabel = result.breakdowns.length > 1
+    ? `RM ${minTotal.toFixed(2)} – RM ${maxTotal.toFixed(2)}`
+    : `RM ${minTotal.toFixed(2)}`;
+  const totalW = result.breakdowns.length > 1 ? 80 : 58;
   doc.setFillColor(...BLUE);
   doc.rect(W - M - totalW, y, totalW, 9, 'F');
   doc.setTextColor(...WHITE);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.text('TOTAL', W - M - totalW + 3, y + 6.2);
-  doc.text(`RM ${result.total.toFixed(2)}`, W - M - 2, y + 6.2, { align: 'right' });
+  doc.text(totalLabel, W - M - 2, y + 6.2, { align: 'right' });
 
   y += 16;
 

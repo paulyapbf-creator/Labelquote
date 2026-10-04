@@ -39,7 +39,7 @@ export function QuoteList({ quotes, onNew, onOpen }: Props) {
 
   const totalAccepted = quotes
     .filter(q => q.status === 'accepted')
-    .reduce((s, q) => s + q.result.total, 0);
+    .reduce((s, q) => s + (q.result.breakdowns[0]?.total ?? 0), 0);
   const pending = quotes.filter(q => q.status === 'draft' || q.status === 'sent').length;
 
   const filtered = quotes.filter(q => {
@@ -138,11 +138,21 @@ export function QuoteList({ quotes, onNew, onOpen }: Props) {
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[q.status]}`}>
                     {STATUS_LABELS[q.status]}
                   </span>
-                  <span className="text-base font-bold text-gray-800">RM {q.result.total.toFixed(2)}</span>
+                  {q.result.breakdowns.length > 1 ? (
+                    <span className="text-xs font-bold text-gray-700">
+                      RM {Math.min(...q.result.breakdowns.map(b => b.total)).toFixed(0)}–{Math.max(...q.result.breakdowns.map(b => b.total)).toFixed(0)}
+                    </span>
+                  ) : (
+                    <span className="text-base font-bold text-gray-800">RM {(q.result.breakdowns[0]?.total ?? 0).toFixed(2)}</span>
+                  )}
                 </div>
               </div>
               <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2.5">
-                <Tag icon="📦">{q.input.quantity.toLocaleString()} pcs</Tag>
+                <Tag icon="📦">{
+                  q.input.quantities.length > 1
+                    ? `${Math.min(...q.input.quantities).toLocaleString()}–${Math.max(...q.input.quantities).toLocaleString()} pcs`
+                    : `${(q.input.quantities[0] ?? 0).toLocaleString()} pcs`
+                }</Tag>
                 <Tag icon="📐">{q.input.labelWidth}×{q.input.labelHeight}mm</Tag>
                 <Tag icon="🗓️">{q.result.date}</Tag>
               </div>

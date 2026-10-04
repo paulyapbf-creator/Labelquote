@@ -1,4 +1,4 @@
-import type { SavedQuote, QuoteStatus, CompanyInfo, PricingConfig } from './types';
+import type { SavedQuote, QuoteStatus, CompanyInfo, PricingConfig, QuoteInput } from './types';
 
 const QUOTES_KEY  = 'labelquote_quotes';
 const COMPANY_KEY = 'labelquote_company';
@@ -8,7 +8,17 @@ const COMPANY_KEY = 'labelquote_company';
 export function loadQuotes(): SavedQuote[] {
   try {
     const raw = localStorage.getItem(QUOTES_KEY);
-    return raw ? (JSON.parse(raw) as SavedQuote[]) : [];
+    if (!raw) return [];
+    const quotes = JSON.parse(raw) as SavedQuote[];
+    // Migrate old quotes: quantity (number) → quantities ([number])
+    return quotes.map(q => {
+      const inp = q.input as QuoteInput & { quantity?: number };
+      if (inp.quantity !== undefined && !inp.quantities) {
+        const { quantity, ...rest } = inp;
+        return { ...q, input: { ...rest, quantities: [quantity] } };
+      }
+      return q;
+    });
   } catch {
     return [];
   }
