@@ -42,6 +42,7 @@ export interface QuoteInput {
   customerName: string;
   customerContact: string;
   customerEmail: string;
+  pricingProfileId: string;
   labelWidth: number;
   labelHeight: number;
   shape: Shape;
@@ -70,6 +71,13 @@ export interface QuoteResult {
   setupFee: number;
   dieFee: number;
   breakdowns: QtyBreakdown[];
+  machineName: string;
+}
+
+export interface PricingProfile {
+  id: string;
+  name: string;
+  config: PricingConfig;
 }
 
 export interface SavedQuote {

@@ -1,9 +1,10 @@
-import type { SavedQuote, QuoteStatus, CompanyInfo, PricingConfig, QuoteInput, CustomerContact } from './types';
+import type { SavedQuote, QuoteStatus, CompanyInfo, PricingConfig, QuoteInput, CustomerContact, PricingProfile } from './types';
 
 const QUOTES_KEY    = 'labelquote_quotes';
 const COMPANY_KEY   = 'labelquote_company';
 const EMAILS_KEY    = 'labelquote_emails';
 const CONTACTS_KEY  = 'labelquote_contacts';
+const PROFILES_KEY  = 'labelquote_profiles';
 
 // ── Quotes ────────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,10 @@ export function loadQuotes(): SavedQuote[] {
       if (inp.customerEmail === undefined) {
         inp = { ...inp, customerEmail: '' };
       }
+      // Migrate: missing pricingProfileId defaults to ''
+      if (inp.pricingProfileId === undefined) {
+        inp = { ...inp, pricingProfileId: '' };
+      }
 
       // Migrate: old result format (unitPrice/subtotal/total) → breakdowns[]
       let result = q.result as typeof q.result & {
@@ -43,6 +48,10 @@ export function loadQuotes(): SavedQuote[] {
             total:     result.total     ?? 0,
           }],
         };
+      }
+      // Migrate: missing machineName in result
+      if (!result.machineName) {
+        result = { ...result, machineName: '' };
       }
 
       return { ...q, input: inp, result };
@@ -212,4 +221,30 @@ export function saveContact(contact: CustomerContact): void {
 
 export function deleteContact(id: string): void {
   saveAllContacts(loadContacts().filter(c => c.id !== id));
+}
+
+// ── Machine Pricing Profiles ──────────────────────────────────────────────────
+
+export function loadProfiles(): PricingProfile[] {
+  try {
+    return JSON.parse(localStorage.getItem(PROFILES_KEY) ?? '[]') as PricingProfile[];
+  } catch {
+    return [];
+  }
+}
+
+function saveAllProfiles(profiles: PricingProfile[]): void {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
+
+export function saveProfile(profile: PricingProfile): void {
+  const list = loadProfiles();
+  const idx = list.findIndex(p => p.id === profile.id);
+  if (idx >= 0) list[idx] = profile;
+  else list.push(profile);
+  saveAllProfiles(list);
+}
+
+export function deleteProfile(id: string): void {
+  saveAllProfiles(loadProfiles().filter(p => p.id !== id));
 }

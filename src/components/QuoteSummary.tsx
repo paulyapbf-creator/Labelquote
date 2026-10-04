@@ -101,6 +101,7 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
                 }).join(', ')
               : input.quantities.map(q => q.toLocaleString()).join(', ') + ' pcs'
           } />
+          {result.machineName && <SpecItem label="Machine"   value={result.machineName} />}
           <SpecItem label="Printer"    value={input.printerModel || '—'} />
           <SpecItem label="Core"       value={input.labelCore || '—'} />
           <SpecItem label="Packing"    value={input.packingPcsPerRoll ? `${input.packingPcsPerRoll.toLocaleString()} pcs/roll` : '—'} />

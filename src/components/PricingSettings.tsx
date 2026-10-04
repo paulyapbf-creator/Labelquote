@@ -4,11 +4,14 @@ import { loadPricing, savePricing } from '../store';
 
 interface Props {
   onBack: () => void;
+  loadConfig?: () => PricingConfig;
+  saveConfig?: (c: PricingConfig) => void;
+  savedMessage?: string;
 }
 
-export function PricingSettings({ onBack: _onBack }: Props) {
+export function PricingSettings({ onBack: _onBack, loadConfig, saveConfig, savedMessage }: Props) {
   const [cfg, setCfg] = useState<PricingConfig>(() =>
-    JSON.parse(JSON.stringify(loadPricing()))
+    JSON.parse(JSON.stringify((loadConfig ?? loadPricing)()))
   );
   const [saved, setSaved] = useState(false);
 
@@ -70,7 +73,7 @@ export function PricingSettings({ onBack: _onBack }: Props) {
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    savePricing(cfg);
+    (saveConfig ?? savePricing)(cfg);
     setSaved(true);
   }
 
@@ -208,7 +211,7 @@ export function PricingSettings({ onBack: _onBack }: Props) {
 
       {saved && (
         <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 text-center text-sm text-green-700 font-medium">
-          Pricing saved. New quotes will use these rates.
+          {savedMessage ?? 'Pricing saved. New quotes will use these rates.'}
         </div>
       )}
     </form>

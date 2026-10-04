@@ -1,7 +1,7 @@
 import { Fragment, useState, useMemo } from 'react';
 import type { QuoteInput, Shape, Material, Finishing, QtyBreakdown } from '../types';
 import { estimatePrice } from '../pricing';
-import { loadEmails, saveEmail } from '../store';
+import { loadEmails, saveEmail, loadProfiles } from '../store';
 
 const SHAPES: { value: Shape; label: string; icon: string }[] = [
   { value: 'rectangle', label: 'Rectangle', icon: '▬' },
@@ -35,6 +35,7 @@ const DEFAULT: QuoteInput = {
   customerName: '',
   customerContact: '',
   customerEmail: '',
+  pricingProfileId: '',
   labelWidth: 50,
   labelHeight: 50,
   shape: 'rectangle',
@@ -60,8 +61,16 @@ export function QuoteForm({ initial, onSubmit }: Props) {
   const [form, setForm] = useState<QuoteInput>(initial ?? DEFAULT);
   const [errors, setErrors] = useState<Errors>({});
   const [savedEmails] = useState<string[]>(loadEmails);
+  const [profiles] = useState(loadProfiles);
 
-  const estimate = useMemo(() => estimatePrice(form), [form]);
+  const selectedProfile = useMemo(
+    () => profiles.find(p => p.id === form.pricingProfileId),
+    [profiles, form.pricingProfileId]
+  );
+  const estimate = useMemo(
+    () => estimatePrice(form, selectedProfile?.config),
+    [form, selectedProfile]
+  );
 
   function set<K extends keyof QuoteInput>(key: K, value: QuoteInput[K]) {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -163,6 +172,40 @@ export function QuoteForm({ initial, onSubmit }: Props) {
           )}
         </Field>
       </Section>
+
+      {/* Machine Profile */}
+      {profiles.length > 0 && (
+        <Section icon="🖨️" title="Machine Profile">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => set('pricingProfileId', '')}
+              className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                !form.pricingProfileId
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'
+              }`}>
+              Default
+            </button>
+            {profiles.map(p => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => set('pricingProfileId', p.id)}
+                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                  form.pricingProfileId === p.id
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'
+                }`}>
+                {p.name}
+              </button>
+            ))}
+          </div>
+          {selectedProfile && (
+            <p className="text-xs text-blue-600">Using rates for: <span className="font-semibold">{selectedProfile.name}</span></p>
+          )}
+        </Section>
+      )}
 
       {/* Size & Shape */}
       <Section icon="📐" title="Size & Shape">

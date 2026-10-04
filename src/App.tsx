@@ -8,6 +8,9 @@ import { QuoteSummary } from './components/QuoteSummary';
 import { Settings } from './components/Settings';
 import { PricingSettings } from './components/PricingSettings';
 import { CustomerContacts } from './components/CustomerContacts';
+import { MachineProfiles } from './components/MachineProfiles';
+import { loadProfiles, saveProfile } from './store';
+import type { PricingConfig } from './types';
 import { BUILD_LABEL } from './version';
 
 type View =
@@ -17,7 +20,9 @@ type View =
   | { page: 'view'; id: string }
   | { page: 'settings' }
   | { page: 'pricing' }
-  | { page: 'contacts' };
+  | { page: 'contacts' }
+  | { page: 'machine-profiles' }
+  | { page: 'profile-edit'; profileId: string };
 
 export default function App() {
   const [view, setView] = useState<View>({ page: 'list' });
@@ -26,7 +31,13 @@ export default function App() {
   const refresh = useCallback(() => setQuotes(loadQuotes()), []);
 
   function handleFormSubmit(input: QuoteInput, existingId?: string) {
-    const result = calculateQuote(input);
+    let profileCfg: PricingConfig | undefined;
+    let machineName = '';
+    if (input.pricingProfileId) {
+      const profile = loadProfiles().find(p => p.id === input.pricingProfileId);
+      if (profile) { profileCfg = profile.config; machineName = profile.name; }
+    }
+    const result = calculateQuote(input, profileCfg, machineName);
     const now = new Date().toISOString();
     const id = existingId ?? generateId();
 
@@ -71,6 +82,8 @@ export default function App() {
                 else if (view.page === 'edit')    setView({ page: 'view', id: view.id });
                 else if (view.page === 'pricing') setView({ page: 'settings' });
                 else if (view.page === 'contacts') setView({ page: 'settings' });
+                else if (view.page === 'machine-profiles') setView({ page: 'settings' });
+                else if (view.page === 'profile-edit') setView({ page: 'machine-profiles' });
                 else setView({ page: 'list' });
               }}
               className="p-1 -ml-1 text-gray-500 hover:text-gray-800 transition-colors"
@@ -86,9 +99,11 @@ export default function App() {
               {view.page === 'new'      && 'New Quote'}
               {view.page === 'edit'     && 'Edit Quote'}
               {view.page === 'view'     && 'Quote Details'}
-              {view.page === 'settings' && 'Settings'}
-              {view.page === 'pricing'  && 'Pricing Rates'}
-              {view.page === 'contacts' && 'Customer Contacts'}
+              {view.page === 'settings'        && 'Settings'}
+              {view.page === 'pricing'         && 'Default Pricing Rates'}
+              {view.page === 'contacts'        && 'Customer Contacts'}
+              {view.page === 'machine-profiles'&& 'Machine Pricing'}
+              {view.page === 'profile-edit'    && 'Edit Machine Rates'}
             </p>
             {view.page === 'list' && (
               <p className="text-xs font-mono text-gray-400 leading-tight">{BUILD_LABEL}</p>
@@ -148,6 +163,7 @@ export default function App() {
             onBack={() => setView({ page: 'list' })}
             onPricingRates={() => setView({ page: 'pricing' })}
             onContacts={() => setView({ page: 'contacts' })}
+            onMachineProfiles={() => setView({ page: 'machine-profiles' })}
           />
         )}
 
@@ -158,6 +174,30 @@ export default function App() {
         {view.page === 'contacts' && (
           <CustomerContacts onBack={() => setView({ page: 'settings' })} />
         )}
+
+        {view.page === 'machine-profiles' && (
+          <MachineProfiles
+            onBack={() => setView({ page: 'settings' })}
+            onEditRates={profileId => setView({ page: 'profile-edit', profileId })}
+          />
+        )}
+
+        {view.page === 'profile-edit' && (() => {
+          const isDefault = view.profileId === '__default__';
+          if (isDefault) {
+            return <PricingSettings onBack={() => setView({ page: 'machine-profiles' })} savedMessage="Default rates saved." />;
+          }
+          const profile = loadProfiles().find(p => p.id === view.profileId);
+          if (!profile) { setView({ page: 'machine-profiles' }); return null; }
+          return (
+            <PricingSettings
+              onBack={() => setView({ page: 'machine-profiles' })}
+              loadConfig={() => JSON.parse(JSON.stringify(profile.config)) as PricingConfig}
+              saveConfig={cfg => saveProfile({ ...profile, config: cfg })}
+              savedMessage={`Rates saved for ${profile.name}.`}
+            />
+          );
+        })()}
 
         {view.page === 'view' && (() => {
           const q = currentQuote(view.id);

@@ -37,15 +37,15 @@ function buildBreakdowns(cfg: PricingConfig, input: QuoteInput): QtyBreakdown[] 
   });
 }
 
-export function estimatePrice(input: QuoteInput): QtyBreakdown[] | null {
+export function estimatePrice(input: QuoteInput, cfg?: PricingConfig): QtyBreakdown[] | null {
   if (!input.labelWidth || !input.labelHeight || input.quantities.length === 0) return null;
-  return buildBreakdowns(loadPricing(), input);
+  return buildBreakdowns(cfg ?? loadPricing(), input);
 }
 
 let quoteCounter = 0;
 
-export function calculateQuote(input: QuoteInput): QuoteResult {
-  const cfg = loadPricing();
+export function calculateQuote(input: QuoteInput, cfg?: PricingConfig, machineName = ''): QuoteResult {
+  const config = cfg ?? loadPricing();
 
   const now = new Date();
   quoteCounter++;
@@ -56,14 +56,15 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  const validDate = new Date(now.getTime() + cfg.quoteValidityDays * 86_400_000);
+  const validDate = new Date(now.getTime() + config.quoteValidityDays * 86_400_000);
 
   return {
     quoteNo,
-    date:       fmtDate(now),
-    validUntil: fmtDate(validDate),
-    setupFee:   cfg.setupFeeEnabled ? cfg.setupFee : 0,
-    dieFee:     (input.shape === 'die-cut' && cfg.dieFeeEnabled) ? cfg.dieFee : 0,
-    breakdowns: buildBreakdowns(cfg, input),
+    date:        fmtDate(now),
+    validUntil:  fmtDate(validDate),
+    setupFee:    config.setupFeeEnabled ? config.setupFee : 0,
+    dieFee:      (input.shape === 'die-cut' && config.dieFeeEnabled) ? config.dieFee : 0,
+    breakdowns:  buildBreakdowns(config, input),
+    machineName,
   };
 }
