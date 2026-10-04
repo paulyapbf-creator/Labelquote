@@ -161,7 +161,6 @@ export default function App() {
         {view.page === 'settings' && (
           <Settings
             onBack={() => setView({ page: 'list' })}
-            onPricingRates={() => setView({ page: 'pricing' })}
             onContacts={() => setView({ page: 'contacts' })}
             onMachineProfiles={() => setView({ page: 'machine-profiles' })}
           />

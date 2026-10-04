@@ -5,12 +5,11 @@ import { BUILD_LABEL } from '../version';
 
 interface Props {
   onBack: () => void;
-  onPricingRates: () => void;
   onContacts: () => void;
   onMachineProfiles: () => void;
 }
 
-export function Settings({ onBack: _onBack, onPricingRates, onContacts, onMachineProfiles }: Props) {
+export function Settings({ onBack: _onBack, onContacts, onMachineProfiles }: Props) {
   const [form, setForm] = useState<CompanyInfo>(loadCompany);
   const [saved, setSaved] = useState(false);
 
@@ -33,7 +32,6 @@ export function Settings({ onBack: _onBack, onPricingRates, onContacts, onMachin
       {/* Nav buttons */}
       <div className="space-y-2">
         <NavButton icon="🖨️" label="Machine Pricing" onClick={onMachineProfiles} />
-        <NavButton icon="💰" label="Default Pricing Rates" onClick={onPricingRates} />
         <NavButton icon="👥" label="Customer Contacts" onClick={onContacts} />
       </div>
 
