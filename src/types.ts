@@ -4,8 +4,8 @@ export type Finishing = 'none' | 'gloss-lam' | 'matte-lam';
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected';
 
 export interface PricingConfig {
-  materials:        Record<string, { name: string; ratePerCm2: number }>;
-  finishings:       Record<string, { name: string; ratePerCm2: number }>;
+  materials:        Record<string, { name: string; ratePerSqm: number }>;
+  finishings:       Record<string, { name: string; ratePerSqm: number }>;
   shapes:           Record<string, { name: string; multiplier: number }>;
   fullColorRate:    number;
   setupFee:         number;

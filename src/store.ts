@@ -78,18 +78,18 @@ const PRICING_KEY = 'labelquote_pricing';
 
 const PRICING_DEFAULTS: PricingConfig = {
   materials: {
-    'gloss-paper': { name: 'Gloss White Paper',         ratePerCm2: 0.0030 },
-    'matte-paper': { name: 'Matte White Paper',         ratePerCm2: 0.0035 },
-    'kraft-paper': { name: 'Kraft Brown Paper',         ratePerCm2: 0.0030 },
-    'gloss-vinyl': { name: 'Gloss White Vinyl',         ratePerCm2: 0.0060 },
-    'matte-vinyl': { name: 'Matte White Vinyl',         ratePerCm2: 0.0070 },
-    'clear-vinyl': { name: 'Clear / Transparent Vinyl', ratePerCm2: 0.0080 },
-    'silver-poly': { name: 'Silver Polyester',          ratePerCm2: 0.0090 },
+    'gloss-paper': { name: 'Gloss White Paper',         ratePerSqm: 30 },
+    'matte-paper': { name: 'Matte White Paper',         ratePerSqm: 35 },
+    'kraft-paper': { name: 'Kraft Brown Paper',         ratePerSqm: 30 },
+    'gloss-vinyl': { name: 'Gloss White Vinyl',         ratePerSqm: 60 },
+    'matte-vinyl': { name: 'Matte White Vinyl',         ratePerSqm: 70 },
+    'clear-vinyl': { name: 'Clear / Transparent Vinyl', ratePerSqm: 80 },
+    'silver-poly': { name: 'Silver Polyester',          ratePerSqm: 90 },
   },
   finishings: {
-    'none':      { name: 'No Lamination',    ratePerCm2: 0 },
-    'gloss-lam': { name: 'Gloss Lamination', ratePerCm2: 0.0010 },
-    'matte-lam': { name: 'Matte Lamination', ratePerCm2: 0.0012 },
+    'none':      { name: 'No Lamination',    ratePerSqm: 0 },
+    'gloss-lam': { name: 'Gloss Lamination', ratePerSqm: 10 },
+    'matte-lam': { name: 'Matte Lamination', ratePerSqm: 12 },
   },
   shapes: {
     'rectangle': { name: 'Rectangle / Square', multiplier: 1.00 },
@@ -97,7 +97,7 @@ const PRICING_DEFAULTS: PricingConfig = {
     'circle':    { name: 'Circle / Oval',      multiplier: 1.10 },
     'die-cut':   { name: 'Custom Die-Cut',     multiplier: 1.15 },
   },
-  fullColorRate:     0.0025,
+  fullColorRate:     25,
   setupFee:          80,
   dieFee:            50,
   minOrderTotal:     50,

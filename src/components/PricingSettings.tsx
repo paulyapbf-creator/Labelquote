@@ -19,7 +19,7 @@ export function PricingSettings({ onBack: _onBack }: Props) {
     markChanged();
   }
 
-  function setMaterialField(key: string, field: 'name' | 'ratePerCm2', value: string | number) {
+  function setMaterialField(key: string, field: 'name' | 'ratePerSqm', value: string | number) {
     setCfg(prev => ({
       ...prev,
       materials: { ...prev.materials, [key]: { ...prev.materials[key], [field]: value } },
@@ -27,7 +27,7 @@ export function PricingSettings({ onBack: _onBack }: Props) {
     markChanged();
   }
 
-  function setFinishingField(key: string, field: 'name' | 'ratePerCm2', value: string | number) {
+  function setFinishingField(key: string, field: 'name' | 'ratePerSqm', value: string | number) {
     setCfg(prev => ({
       ...prev,
       finishings: { ...prev.finishings, [key]: { ...prev.finishings[key], [field]: value } },
@@ -111,7 +111,7 @@ export function PricingSettings({ onBack: _onBack }: Props) {
 
       {/* Full color */}
       <Section title="Full Color (CMYK) Ink">
-        <InlineRow label="Ink rate (RM / cm²)">
+        <InlineRow label="Ink rate (RM / m²)">
           <input type="number" value={cfg.fullColorRate} min="0" step="0.0001"
             onChange={e => setFixed('fullColorRate', Number(e.target.value))}
             className={numCls} />
@@ -119,18 +119,18 @@ export function PricingSettings({ onBack: _onBack }: Props) {
       </Section>
 
       {/* Materials */}
-      <Section title="Material Rates (RM / cm²)">
-        <p className="text-xs text-gray-400 -mt-1">Rate per cm² of label area</p>
+      <Section title="Material Rates (RM / m²)">
+        <p className="text-xs text-gray-400 -mt-1">Rate per m² of label area</p>
         <div className="grid grid-cols-[1fr_90px] gap-x-2 gap-y-2 items-center">
           <span className="text-xs font-semibold text-gray-400">Material Name</span>
-          <span className="text-xs font-semibold text-gray-400 text-right">RM / cm²</span>
+          <span className="text-xs font-semibold text-gray-400 text-right">RM / m²</span>
           {Object.entries(cfg.materials).map(([key, mat]) => (
             <Fragment key={key}>
               <input type="text" value={mat.name}
                 onChange={e => setMaterialField(key, 'name', e.target.value)}
                 className={txtCls} />
-              <input type="number" value={mat.ratePerCm2} min="0" step="0.0001"
-                onChange={e => setMaterialField(key, 'ratePerCm2', Number(e.target.value))}
+              <input type="number" value={mat.ratePerSqm} min="0" step="0.0001"
+                onChange={e => setMaterialField(key, 'ratePerSqm', Number(e.target.value))}
                 className={numCls} />
             </Fragment>
           ))}
@@ -138,17 +138,17 @@ export function PricingSettings({ onBack: _onBack }: Props) {
       </Section>
 
       {/* Finishing */}
-      <Section title="Lamination Rates (RM / cm²)">
+      <Section title="Lamination Rates (RM / m²)">
         <div className="grid grid-cols-[1fr_90px] gap-x-2 gap-y-2 items-center">
           <span className="text-xs font-semibold text-gray-400">Finishing Name</span>
-          <span className="text-xs font-semibold text-gray-400 text-right">RM / cm²</span>
+          <span className="text-xs font-semibold text-gray-400 text-right">RM / m²</span>
           {Object.entries(cfg.finishings).map(([key, fin]) => (
             <Fragment key={key}>
               <input type="text" value={fin.name}
                 onChange={e => setFinishingField(key, 'name', e.target.value)}
                 className={txtCls} />
-              <input type="number" value={fin.ratePerCm2} min="0" step="0.0001"
-                onChange={e => setFinishingField(key, 'ratePerCm2', Number(e.target.value))}
+              <input type="number" value={fin.ratePerSqm} min="0" step="0.0001"
+                onChange={e => setFinishingField(key, 'ratePerSqm', Number(e.target.value))}
                 className={numCls} />
             </Fragment>
           ))}

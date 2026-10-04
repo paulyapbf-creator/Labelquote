@@ -25,10 +25,10 @@ export function estimatePrice(input: QuoteInput): PriceEstimate | null {
   if (!input.labelWidth || !input.labelHeight || !input.quantity || input.quantity < 1) return null;
   const cfg = loadPricing();
   const { labelWidth, labelHeight, material, quantity, fullColor, finishing, shape } = input;
-  const areaCm2       = (labelWidth / 10) * (labelHeight / 10);
-  const materialCost  = (cfg.materials[material]?.ratePerCm2  ?? 0) * areaCm2;
-  const inkCost       = fullColor ? cfg.fullColorRate * areaCm2 : 0;
-  const finishingCost = (cfg.finishings[finishing]?.ratePerCm2 ?? 0) * areaCm2;
+  const areaSqm       = (labelWidth / 1000) * (labelHeight / 1000);
+  const materialCost  = (cfg.materials[material]?.ratePerSqm  ?? 0) * areaSqm;
+  const inkCost       = fullColor ? cfg.fullColorRate * areaSqm : 0;
+  const finishingCost = (cfg.finishings[finishing]?.ratePerSqm ?? 0) * areaSqm;
   const shapeMulti    = cfg.shapes[shape]?.multiplier ?? 1;
   const sorted        = [...cfg.qtyBreaks].sort((a, b) => b.min - a.min);
   const qtyMulti      = sorted.find(b => quantity >= b.min)?.multiplier ?? 1.5;
@@ -46,11 +46,11 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
   const cfg = loadPricing();
   const { labelWidth, labelHeight, material, quantity, fullColor, finishing, shape } = input;
 
-  const areaCm2 = (labelWidth / 10) * (labelHeight / 10);
+  const areaSqm = (labelWidth / 1000) * (labelHeight / 1000);
 
-  const materialCost  = (cfg.materials[material]?.ratePerCm2  ?? 0) * areaCm2;
-  const inkCost       = fullColor ? cfg.fullColorRate * areaCm2 : 0;
-  const finishingCost = (cfg.finishings[finishing]?.ratePerCm2 ?? 0) * areaCm2;
+  const materialCost  = (cfg.materials[material]?.ratePerSqm  ?? 0) * areaSqm;
+  const inkCost       = fullColor ? cfg.fullColorRate * areaSqm : 0;
+  const finishingCost = (cfg.finishings[finishing]?.ratePerSqm ?? 0) * areaSqm;
   const shapeMulti    = cfg.shapes[shape]?.multiplier ?? 1;
 
   const sorted = [...cfg.qtyBreaks].sort((a, b) => b.min - a.min);
