@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "npm run build"
 
 [deploy]
-startCommand = "caddy run --config /assets/Caddyfile --adapter caddyfile"
+startCommand = "node server.js"
 restartPolicyType = "on_failure"
 healthcheckPath = "/"
 healthcheckTimeout = 300
