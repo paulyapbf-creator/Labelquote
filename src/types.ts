@@ -28,6 +28,14 @@ export interface CompanyInfo {
   sstNo: string;
   bankName: string;
   bankAccount: string;
+  defaultCcEmail: string;
+}
+
+export interface CustomerContact {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
 }
 
 export interface QuoteInput {

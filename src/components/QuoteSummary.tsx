@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import type { QuoteStatus, SavedQuote } from '../types';
+import type { QuoteStatus, SavedQuote, CustomerContact } from '../types';
 import { getMaterialName, getFinishingName, getShapeName } from '../pricing';
 import { generatePDF } from '../utils/pdf';
 import { generateTextQuote, openEmailQuote } from '../utils/textQuote';
+import { loadContacts, loadCompany } from '../store';
 
 const STATUS_CONFIG: Record<QuoteStatus, { label: string; active: string; inactive: string }> = {
   draft:    { label: 'Draft',    active: 'bg-gray-600 text-white',   inactive: 'border border-gray-200 text-gray-500' },
@@ -23,6 +24,8 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
   const { input, result, status } = savedQuote;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showEmailPicker, setShowEmailPicker] = useState(false);
+  const [emailSearch, setEmailSearch] = useState('');
 
   function handleCopyText() {
     const text = generateTextQuote(input, result);
@@ -30,6 +33,13 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  }
+
+  function handleSendEmail(toEmail: string) {
+    const company = loadCompany();
+    openEmailQuote(input, result, toEmail, company.defaultCcEmail);
+    setShowEmailPicker(false);
+    setEmailSearch('');
   }
 
   return (
@@ -160,7 +170,7 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
           </svg>
           {copied ? 'Copied!' : 'Copy Text'}
         </button>
-        <button onClick={() => openEmailQuote(input, result)}
+        <button onClick={() => setShowEmailPicker(true)}
           className="py-3 border border-gray-200 text-gray-700 font-semibold rounded-2xl hover:bg-gray-50 active:scale-95 transition-all text-sm flex items-center justify-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -179,6 +189,17 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
           All Quotes
         </button>
       </div>
+
+      {/* Email Contact Picker */}
+      {showEmailPicker && (
+        <EmailPicker
+          quoteEmail={input.customerEmail}
+          onSend={handleSendEmail}
+          onClose={() => { setShowEmailPicker(false); setEmailSearch(''); }}
+          search={emailSearch}
+          onSearch={setEmailSearch}
+        />
+      )}
 
       {/* Delete */}
       {!showDeleteConfirm ? (
@@ -212,6 +233,99 @@ function SpecItem({ label, value }: { label: string; value: string }) {
       <p className="text-xs text-gray-400">{label}</p>
       <p className="text-sm font-semibold text-gray-800 mt-0.5">{value}</p>
     </div>
+  );
+}
+
+function EmailPicker({ quoteEmail, onSend, onClose, search, onSearch }: {
+  quoteEmail: string;
+  onSend: (email: string) => void;
+  onClose: () => void;
+  search: string;
+  onSearch: (v: string) => void;
+}) {
+  const contacts = loadContacts();
+  const q = search.toLowerCase();
+  const filtered = contacts.filter(c =>
+    c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={onClose}>
+      <div className="w-full max-w-lg bg-white rounded-t-3xl shadow-2xl p-4 pb-8 space-y-3 max-h-[80vh] flex flex-col"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-bold text-gray-800 text-base">Send Quotation</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-1">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Search contacts or type email…"
+          value={search}
+          onChange={e => onSearch(e.target.value)}
+          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          autoFocus
+        />
+
+        <div className="overflow-y-auto flex-1 space-y-1 min-h-0">
+          {/* Quote's own email */}
+          {quoteEmail && (
+            <ContactRow
+              name="This Quote"
+              email={quoteEmail}
+              badge="quote"
+              onSend={() => onSend(quoteEmail)}
+            />
+          )}
+
+          {/* Saved contacts */}
+          {filtered.map((c: CustomerContact) => (
+            <ContactRow key={c.id} name={c.name} email={c.email} onSend={() => onSend(c.email)} />
+          ))}
+
+          {filtered.length === 0 && !quoteEmail && contacts.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">No contacts saved yet.<br/>Go to Settings → Customer Contacts to add some.</p>
+          )}
+        </div>
+
+        {/* Send to typed email if it looks valid */}
+        {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(search) && (
+          <button onClick={() => onSend(search)}
+            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-2xl text-sm flex items-center justify-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Send to {search}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ContactRow({ name, email, badge, onSend }: {
+  name: string; email: string; badge?: string; onSend: () => void;
+}) {
+  return (
+    <button onClick={onSend}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-blue-50 transition-colors text-left">
+      <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+        <span className="text-blue-600 font-bold text-sm">{name[0]?.toUpperCase()}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-gray-800 truncate">{name}
+          {badge && <span className="ml-1.5 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-normal">{badge}</span>}
+        </p>
+        <p className="text-xs text-gray-400 truncate">{email}</p>
+      </div>
+      <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
   );
 }
 

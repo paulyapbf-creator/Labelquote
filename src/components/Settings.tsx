@@ -6,9 +6,10 @@ import { BUILD_LABEL } from '../version';
 interface Props {
   onBack: () => void;
   onPricingRates: () => void;
+  onContacts: () => void;
 }
 
-export function Settings({ onBack: _onBack, onPricingRates }: Props) {
+export function Settings({ onBack: _onBack, onPricingRates, onContacts }: Props) {
   const [form, setForm] = useState<CompanyInfo>(loadCompany);
   const [saved, setSaved] = useState(false);
 
@@ -28,19 +29,11 @@ export function Settings({ onBack: _onBack, onPricingRates }: Props) {
   return (
     <form onSubmit={handleSave} className="space-y-4 pb-8">
 
-      {/* Nav to pricing */}
-      <button
-        type="button"
-        onClick={onPricingRates}
-        className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center justify-between text-sm font-medium text-gray-700 hover:border-blue-200 transition-colors"
-      >
-        <span className="flex items-center gap-2">
-          <span className="text-base">💰</span> Pricing Rates
-        </span>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+      {/* Nav buttons */}
+      <div className="space-y-2">
+        <NavButton icon="💰" label="Pricing Rates" onClick={onPricingRates} />
+        <NavButton icon="👥" label="Customer Contacts" onClick={onContacts} />
+      </div>
 
       <Section title="Company Details">
         <Field label="Company Name *">
@@ -89,6 +82,16 @@ export function Settings({ onBack: _onBack, onPricingRates }: Props) {
             className={inputCls}
           />
         </Field>
+        <Field label="Default CC Email">
+          <input
+            type="email"
+            value={form.defaultCcEmail}
+            onChange={e => set('defaultCcEmail', e.target.value)}
+            placeholder="Always CC this address when emailing quotes"
+            className={inputCls}
+          />
+          <p className="text-xs text-gray-400 mt-1">Auto-CC'd on every quotation email sent.</p>
+        </Field>
       </Section>
 
       <Section title="Tax & Banking (Optional)">
@@ -136,6 +139,23 @@ export function Settings({ onBack: _onBack, onPricingRates }: Props) {
 
       <p className="text-center text-xs text-gray-400 pb-2 font-mono">{BUILD_LABEL}</p>
     </form>
+  );
+}
+
+function NavButton({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center justify-between text-sm font-medium text-gray-700 hover:border-blue-200 transition-colors"
+    >
+      <span className="flex items-center gap-2">
+        <span className="text-base">{icon}</span> {label}
+      </span>
+      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
   );
 }
 

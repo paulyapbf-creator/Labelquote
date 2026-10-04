@@ -1,8 +1,9 @@
-import type { SavedQuote, QuoteStatus, CompanyInfo, PricingConfig, QuoteInput } from './types';
+import type { SavedQuote, QuoteStatus, CompanyInfo, PricingConfig, QuoteInput, CustomerContact } from './types';
 
-const QUOTES_KEY  = 'labelquote_quotes';
-const COMPANY_KEY = 'labelquote_company';
-const EMAILS_KEY  = 'labelquote_emails';
+const QUOTES_KEY    = 'labelquote_quotes';
+const COMPANY_KEY   = 'labelquote_company';
+const EMAILS_KEY    = 'labelquote_emails';
+const CONTACTS_KEY  = 'labelquote_contacts';
 
 // ── Quotes ────────────────────────────────────────────────────────────────────
 
@@ -86,14 +87,15 @@ export function generateId(): string {
 // ── Company Info ──────────────────────────────────────────────────────────────
 
 const COMPANY_DEFAULTS: CompanyInfo = {
-  name:        'Your Company Name',
-  address:     'No. 1, Jalan ABC, 12345 Kuala Lumpur, Malaysia',
-  phone:       '+60 12-345 6789',
-  email:       'info@yourcompany.com',
-  website:     '',
-  sstNo:       '',
-  bankName:    '',
-  bankAccount: '',
+  name:           'Your Company Name',
+  address:        'No. 1, Jalan ABC, 12345 Kuala Lumpur, Malaysia',
+  phone:          '+60 12-345 6789',
+  email:          'info@yourcompany.com',
+  website:        '',
+  sstNo:          '',
+  bankName:       '',
+  bankAccount:    '',
+  defaultCcEmail: '',
 };
 
 export function loadCompany(): CompanyInfo {
@@ -184,4 +186,30 @@ export function saveEmail(email: string): void {
   const list = loadEmails().filter(x => x !== e);
   list.unshift(e);
   localStorage.setItem(EMAILS_KEY, JSON.stringify(list.slice(0, 100)));
+}
+
+// ── Customer Contacts ─────────────────────────────────────────────────────────
+
+export function loadContacts(): CustomerContact[] {
+  try {
+    return JSON.parse(localStorage.getItem(CONTACTS_KEY) ?? '[]') as CustomerContact[];
+  } catch {
+    return [];
+  }
+}
+
+function saveAllContacts(contacts: CustomerContact[]): void {
+  localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
+}
+
+export function saveContact(contact: CustomerContact): void {
+  const list = loadContacts();
+  const idx = list.findIndex(c => c.id === contact.id);
+  if (idx >= 0) list[idx] = contact;
+  else list.unshift(contact);
+  saveAllContacts(list);
+}
+
+export function deleteContact(id: string): void {
+  saveAllContacts(loadContacts().filter(c => c.id !== id));
 }

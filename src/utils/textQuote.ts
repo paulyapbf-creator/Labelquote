@@ -75,10 +75,11 @@ export function generateTextQuote(input: QuoteInput, result: QuoteResult): strin
   return lines.join('\n');
 }
 
-export function openEmailQuote(input: QuoteInput, result: QuoteResult): void {
+export function openEmailQuote(input: QuoteInput, result: QuoteResult, toEmail?: string, ccEmail?: string): void {
   const text = generateTextQuote(input, result);
   const subject = encodeURIComponent(`Quotation ${result.quoteNo} – ${input.customerName}`);
   const body = encodeURIComponent(text);
-  const to = input.customerEmail ? encodeURIComponent(input.customerEmail) : '';
-  window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_self');
+  const to = toEmail ?? input.customerEmail ?? '';
+  const cc = ccEmail ? `&cc=${encodeURIComponent(ccEmail)}` : '';
+  window.open(`mailto:${encodeURIComponent(to)}?subject=${subject}${cc}&body=${body}`, '_self');
 }

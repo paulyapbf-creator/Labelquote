@@ -7,6 +7,7 @@ import { QuoteForm } from './components/QuoteForm';
 import { QuoteSummary } from './components/QuoteSummary';
 import { Settings } from './components/Settings';
 import { PricingSettings } from './components/PricingSettings';
+import { CustomerContacts } from './components/CustomerContacts';
 import { BUILD_LABEL } from './version';
 
 type View =
@@ -15,7 +16,8 @@ type View =
   | { page: 'edit'; id: string }
   | { page: 'view'; id: string }
   | { page: 'settings' }
-  | { page: 'pricing' };
+  | { page: 'pricing' }
+  | { page: 'contacts' };
 
 export default function App() {
   const [view, setView] = useState<View>({ page: 'list' });
@@ -68,6 +70,7 @@ export default function App() {
                 if (view.page === 'view')     setView({ page: 'list' });
                 else if (view.page === 'edit')    setView({ page: 'view', id: view.id });
                 else if (view.page === 'pricing') setView({ page: 'settings' });
+                else if (view.page === 'contacts') setView({ page: 'settings' });
                 else setView({ page: 'list' });
               }}
               className="p-1 -ml-1 text-gray-500 hover:text-gray-800 transition-colors"
@@ -85,6 +88,7 @@ export default function App() {
               {view.page === 'view'     && 'Quote Details'}
               {view.page === 'settings' && 'Settings'}
               {view.page === 'pricing'  && 'Pricing Rates'}
+              {view.page === 'contacts' && 'Customer Contacts'}
             </p>
             {view.page === 'list' && (
               <p className="text-xs font-mono text-gray-400 leading-tight">{BUILD_LABEL}</p>
@@ -143,11 +147,16 @@ export default function App() {
           <Settings
             onBack={() => setView({ page: 'list' })}
             onPricingRates={() => setView({ page: 'pricing' })}
+            onContacts={() => setView({ page: 'contacts' })}
           />
         )}
 
         {view.page === 'pricing' && (
           <PricingSettings onBack={() => setView({ page: 'settings' })} />
+        )}
+
+        {view.page === 'contacts' && (
+          <CustomerContacts onBack={() => setView({ page: 'settings' })} />
         )}
 
         {view.page === 'view' && (() => {
