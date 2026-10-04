@@ -42,6 +42,7 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
             <p className="text-blue-200 text-xs font-mono">{result.quoteNo}</p>
             <h2 className="text-xl font-bold mt-1">{input.customerName}</h2>
             {input.customerContact && <p className="text-blue-200 text-sm mt-0.5">{input.customerContact}</p>}
+            {input.customerEmail && <p className="text-blue-200 text-sm mt-0.5">{input.customerEmail}</p>}
           </div>
           <div className="text-right shrink-0 ml-4">
             <p className="text-blue-200 text-xs">From</p>

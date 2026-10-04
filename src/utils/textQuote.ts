@@ -79,7 +79,6 @@ export function openEmailQuote(input: QuoteInput, result: QuoteResult): void {
   const text = generateTextQuote(input, result);
   const subject = encodeURIComponent(`Quotation ${result.quoteNo} – ${input.customerName}`);
   const body = encodeURIComponent(text);
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.customerContact);
-  const to = isEmail ? encodeURIComponent(input.customerContact) : '';
+  const to = input.customerEmail ? encodeURIComponent(input.customerEmail) : '';
   window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_self');
 }

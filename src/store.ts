@@ -2,6 +2,7 @@ import type { SavedQuote, QuoteStatus, CompanyInfo, PricingConfig, QuoteInput } 
 
 const QUOTES_KEY  = 'labelquote_quotes';
 const COMPANY_KEY = 'labelquote_company';
+const EMAILS_KEY  = 'labelquote_emails';
 
 // ── Quotes ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,10 @@ export function loadQuotes(): SavedQuote[] {
       // Migrate: missing quantityUnit defaults to 'pcs'
       if (!inp.quantityUnit) {
         inp = { ...inp, quantityUnit: 'pcs' };
+      }
+      // Migrate: missing customerEmail defaults to ''
+      if (inp.customerEmail === undefined) {
+        inp = { ...inp, customerEmail: '' };
       }
 
       // Migrate: old result format (unitPrice/subtotal/total) → breakdowns[]
@@ -159,4 +164,24 @@ export function loadPricing(): PricingConfig {
 
 export function savePricing(config: PricingConfig): void {
   localStorage.setItem(PRICING_KEY, JSON.stringify(config));
+}
+
+// ── Customer Emails ───────────────────────────────────────────────────────────
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function loadEmails(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(EMAILS_KEY) ?? '[]') as string[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveEmail(email: string): void {
+  const e = email.trim().toLowerCase();
+  if (!e || !EMAIL_RE.test(e)) return;
+  const list = loadEmails().filter(x => x !== e);
+  list.unshift(e);
+  localStorage.setItem(EMAILS_KEY, JSON.stringify(list.slice(0, 100)));
 }

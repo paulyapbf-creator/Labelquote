@@ -33,6 +33,7 @@ export interface CompanyInfo {
 export interface QuoteInput {
   customerName: string;
   customerContact: string;
+  customerEmail: string;
   labelWidth: number;
   labelHeight: number;
   shape: Shape;

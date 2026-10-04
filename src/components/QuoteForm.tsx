@@ -1,6 +1,7 @@
 import { Fragment, useState, useMemo } from 'react';
 import type { QuoteInput, Shape, Material, Finishing, QtyBreakdown } from '../types';
 import { estimatePrice } from '../pricing';
+import { loadEmails, saveEmail } from '../store';
 
 const SHAPES: { value: Shape; label: string; icon: string }[] = [
   { value: 'rectangle', label: 'Rectangle', icon: '▬' },
@@ -33,6 +34,7 @@ const CORE_OPTIONS = ['1"', '1.5"', '3"'];
 const DEFAULT: QuoteInput = {
   customerName: '',
   customerContact: '',
+  customerEmail: '',
   labelWidth: 50,
   labelHeight: 50,
   shape: 'rectangle',
@@ -57,6 +59,7 @@ interface Props {
 export function QuoteForm({ initial, onSubmit }: Props) {
   const [form, setForm] = useState<QuoteInput>(initial ?? DEFAULT);
   const [errors, setErrors] = useState<Errors>({});
+  const [savedEmails] = useState<string[]>(loadEmails);
 
   const estimate = useMemo(() => estimatePrice(form), [form]);
 
@@ -118,7 +121,10 @@ export function QuoteForm({ initial, onSubmit }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (validate()) onSubmit(form);
+    if (validate()) {
+      if (form.customerEmail) saveEmail(form.customerEmail);
+      onSubmit(form);
+    }
   }
 
   const inputCls = (err?: string) =>
@@ -135,11 +141,26 @@ export function QuoteForm({ initial, onSubmit }: Props) {
             placeholder="Company or individual name"
             className={inputCls(errors.customerName)} />
         </Field>
-        <Field label="Phone / Email">
+        <Field label="Phone">
           <input type="text" value={form.customerContact}
             onChange={e => set('customerContact', e.target.value)}
             placeholder="Optional"
             className={inputCls()} />
+        </Field>
+        <Field label="Email">
+          <input
+            type="email"
+            list="email-suggestions"
+            value={form.customerEmail}
+            onChange={e => set('customerEmail', e.target.value)}
+            placeholder="customer@email.com"
+            className={inputCls()}
+          />
+          {savedEmails.length > 0 && (
+            <datalist id="email-suggestions">
+              {savedEmails.map(e => <option key={e} value={e} />)}
+            </datalist>
+          )}
         </Field>
       </Section>
 
