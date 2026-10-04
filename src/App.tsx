@@ -7,6 +7,7 @@ import { QuoteForm } from './components/QuoteForm';
 import { QuoteSummary } from './components/QuoteSummary';
 import { Settings } from './components/Settings';
 import { PricingSettings } from './components/PricingSettings';
+import { BUILD_LABEL } from './version';
 
 type View =
   | { page: 'list' }
@@ -76,14 +77,19 @@ export default function App() {
               </svg>
             </button>
           )}
-          <h1 className="font-bold text-gray-800 text-base flex-1">
-            {view.page === 'list'     && 'LabelQuote'}
-            {view.page === 'new'      && 'New Quote'}
-            {view.page === 'edit'     && 'Edit Quote'}
-            {view.page === 'view'     && 'Quote Details'}
-            {view.page === 'settings' && 'Settings'}
-            {view.page === 'pricing'  && 'Pricing Rates'}
-          </h1>
+          <div className="flex-1">
+            <p className="font-bold text-gray-800 text-base leading-tight">
+              {view.page === 'list'     && 'LabelQuote'}
+              {view.page === 'new'      && 'New Quote'}
+              {view.page === 'edit'     && 'Edit Quote'}
+              {view.page === 'view'     && 'Quote Details'}
+              {view.page === 'settings' && 'Settings'}
+              {view.page === 'pricing'  && 'Pricing Rates'}
+            </p>
+            {view.page === 'list' && (
+              <p className="text-xs font-mono text-gray-400 leading-tight">{BUILD_LABEL}</p>
+            )}
+          </div>
           {view.page === 'list' && (
             <div className="flex items-center gap-3">
               <button
