@@ -37,7 +37,7 @@ const DEFAULT: QuoteInput = {
   labelHeight: 50,
   shape: 'rectangle',
   material: 'gloss-paper',
-  quantities: [1000],
+  quantities: [],
   quantityUnit: 'pcs',
   fullColor: true,
   finishing: 'none',

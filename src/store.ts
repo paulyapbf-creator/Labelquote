@@ -22,7 +22,24 @@ export function loadQuotes(): SavedQuote[] {
       if (!inp.quantityUnit) {
         inp = { ...inp, quantityUnit: 'pcs' };
       }
-      return { ...q, input: inp };
+
+      // Migrate: old result format (unitPrice/subtotal/total) → breakdowns[]
+      let result = q.result as typeof q.result & {
+        unitPrice?: number; subtotal?: number; total?: number;
+      };
+      if (!result.breakdowns) {
+        result = {
+          ...result,
+          breakdowns: [{
+            quantity:  inp.quantities[0] ?? 0,
+            unitPrice: result.unitPrice ?? 0,
+            subtotal:  result.subtotal  ?? 0,
+            total:     result.total     ?? 0,
+          }],
+        };
+      }
+
+      return { ...q, input: inp, result };
     });
   } catch {
     return [];
