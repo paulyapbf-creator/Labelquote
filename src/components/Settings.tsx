@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CompanyInfo } from '../types';
 import { loadCompany, saveCompany } from '../store';
+import { BUILD_LABEL } from '../version';
 
 interface Props {
   onBack: () => void;
@@ -132,6 +133,8 @@ export function Settings({ onBack: _onBack, onPricingRates }: Props) {
           Settings saved successfully.
         </div>
       )}
+
+      <p className="text-center text-xs text-gray-400 pb-2 font-mono">{BUILD_LABEL}</p>
     </form>
   );
 }
