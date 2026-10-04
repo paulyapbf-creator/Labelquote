@@ -411,7 +411,12 @@ export function QuoteForm({ initial, onSubmit }: Props) {
             <span className="text-xs text-blue-300 font-semibold text-right">Total</span>
             {estimate.map((bd: QtyBreakdown) => (
               <Fragment key={bd.quantity}>
-                <span className="text-blue-100">{bd.quantity.toLocaleString()} pcs</span>
+                <span className="text-blue-100">
+                  {qtyLabel(bd.quantity)}
+                  {form.quantityUnit === 'rolls' && form.packingPcsPerRoll > 0 && Number.isInteger(bd.quantity / form.packingPcsPerRoll) && (
+                    <span className="text-blue-400 text-xs ml-1">({bd.quantity.toLocaleString()} pcs)</span>
+                  )}
+                </span>
                 <span className="text-right font-mono">RM {bd.unitPrice.toFixed(4)}</span>
                 <span className="text-right font-semibold">RM {bd.total.toFixed(2)}</span>
               </Fragment>
