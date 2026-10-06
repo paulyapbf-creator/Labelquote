@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import type { QuoteInput, QuoteResult } from '../types';
 import { getMaterialName, getFinishingName, getShapeName } from '../pricing';
 import { loadCompany } from '../store';
+import { BUILD_LABEL } from '../version';
 
 // jspdf-autotable adds lastAutoTable to jsPDF instance
 interface JsPDFWithAutoTable extends jsPDF {
@@ -249,7 +250,10 @@ export function generatePDF(input: QuoteInput, result: QuoteResult): void {
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7.5);
   doc.setTextColor(...GRAY);
-  doc.text('Thank you for your business!', W / 2, pageH - 8, { align: 'center' });
+  doc.text('Thank you for your business!', W / 2, pageH - 11, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.text(BUILD_LABEL, W / 2, pageH - 6, { align: 'center' });
 
   doc.save(`${result.quoteNo}.pdf`);
 }
