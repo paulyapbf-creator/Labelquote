@@ -473,18 +473,24 @@ export function QuoteForm({ initial, onSubmit }: Props) {
             <span className="text-xs text-blue-300 font-semibold">Quantity</span>
             <span className="text-xs text-blue-300 font-semibold text-right">Unit Price</span>
             <span className="text-xs text-blue-300 font-semibold text-right">Total</span>
-            {estimate.map((bd: QtyBreakdown) => (
-              <Fragment key={bd.quantity}>
-                <span className="text-blue-100">
-                  {qtyLabel(bd.quantity)}
-                  {form.quantityUnit === 'rolls' && form.packingPcsPerRoll > 0 && Number.isInteger(bd.quantity / form.packingPcsPerRoll) && (
-                    <span className="text-blue-400 text-xs ml-1">({bd.quantity.toLocaleString()} pcs)</span>
-                  )}
-                </span>
-                <span className="text-right font-mono">RM {bd.unitPrice.toFixed(4)}</span>
-                <span className="text-right font-semibold">RM {bd.total.toFixed(2)}</span>
-              </Fragment>
-            ))}
+            {estimate.map((bd: QtyBreakdown) => {
+              const isRolls = form.quantityUnit === 'rolls' && form.packingPcsPerRoll > 0 && Number.isInteger(bd.quantity / form.packingPcsPerRoll);
+              const unitPriceStr = isRolls
+                ? `RM ${(bd.unitPrice * form.packingPcsPerRoll).toFixed(2)}/roll`
+                : `RM ${bd.unitPrice.toFixed(4)}/pcs`;
+              return (
+                <Fragment key={bd.quantity}>
+                  <span className="text-blue-100">
+                    {qtyLabel(bd.quantity)}
+                    {isRolls && (
+                      <span className="text-blue-400 text-xs ml-1">({bd.quantity.toLocaleString()} pcs)</span>
+                    )}
+                  </span>
+                  <span className="text-right font-mono text-xs">{unitPriceStr}</span>
+                  <span className="text-right font-semibold">RM {bd.total.toFixed(2)}</span>
+                </Fragment>
+              );
+            })}
           </div>
           {estimate[0].total > estimate[0].subtotal && (
             <p className="text-xs text-blue-300 mt-2">* Total includes setup / one-time fees</p>

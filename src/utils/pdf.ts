@@ -148,10 +148,14 @@ export function generatePDF(input: QuoteInput, result: QuoteResult): void {
   const pricingRows: string[][] = result.breakdowns.map(bd => {
     const byRolls = input.quantityUnit === 'rolls' && input.packingPcsPerRoll > 0;
     const r = bd.quantity / input.packingPcsPerRoll;
-    const qtyCell = byRolls && Number.isInteger(r)
+    const isRollRow = byRolls && Number.isInteger(r);
+    const qtyCell = isRollRow
       ? `${r} roll${r !== 1 ? 's' : ''}\n(${bd.quantity.toLocaleString()} pcs)`
       : bd.quantity.toLocaleString();
-    return [labelDesc, qtyCell, `RM ${bd.unitPrice.toFixed(4)}`, `RM ${bd.total.toFixed(2)}`];
+    const unitPriceCell = isRollRow
+      ? `RM ${(bd.unitPrice * input.packingPcsPerRoll).toFixed(2)}/roll`
+      : `RM ${bd.unitPrice.toFixed(4)}/pcs`;
+    return [labelDesc, qtyCell, unitPriceCell, `RM ${bd.total.toFixed(2)}`];
   });
 
   autoTable(doc, {

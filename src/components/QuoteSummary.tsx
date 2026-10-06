@@ -128,19 +128,29 @@ export function QuoteSummary({ savedQuote, onBack, onEdit, onStatusChange, onDel
               </tr>
             </thead>
             <tbody>
-              {result.breakdowns.map(bd => (
-                <tr key={bd.quantity} className="border-b border-gray-50 last:border-0">
-                  <td className="px-3 py-2.5 font-semibold text-gray-800">
-                    {input.quantityUnit === 'rolls' && input.packingPcsPerRoll > 0 && Number.isInteger(bd.quantity / input.packingPcsPerRoll)
-                      ? <>{bd.quantity / input.packingPcsPerRoll} rolls <span className="text-xs text-gray-400 font-normal">({bd.quantity.toLocaleString()} pcs)</span></>
-                      : <>{bd.quantity.toLocaleString()} pcs</>
-                    }
-                  </td>
-                  <td className="px-3 py-2.5 text-right text-gray-500 font-mono text-xs">RM {bd.unitPrice.toFixed(4)}</td>
-                  <td className="px-3 py-2.5 text-right text-gray-600">RM {bd.subtotal.toFixed(2)}</td>
-                  <td className="px-3 py-2.5 text-right font-bold text-blue-600">RM {bd.total.toFixed(2)}</td>
-                </tr>
-              ))}
+              {result.breakdowns.map(bd => {
+                const isRolls = input.quantityUnit === 'rolls' && input.packingPcsPerRoll > 0 && Number.isInteger(bd.quantity / input.packingPcsPerRoll);
+                const rolls = isRolls ? bd.quantity / input.packingPcsPerRoll : 0;
+                const unitPriceStr = isRolls
+                  ? `RM ${(bd.unitPrice * input.packingPcsPerRoll).toFixed(2)}`
+                  : `RM ${bd.unitPrice.toFixed(4)}`;
+                return (
+                  <tr key={bd.quantity} className="border-b border-gray-50 last:border-0">
+                    <td className="px-3 py-2.5 font-semibold text-gray-800">
+                      {isRolls
+                        ? <>{rolls} roll{rolls !== 1 ? 's' : ''} <span className="text-xs text-gray-400 font-normal">({bd.quantity.toLocaleString()} pcs)</span></>
+                        : <>{bd.quantity.toLocaleString()} pcs</>
+                      }
+                    </td>
+                    <td className="px-3 py-2.5 text-right text-gray-500 font-mono text-xs">
+                      {unitPriceStr}
+                      <span className="text-gray-400 font-normal ml-0.5">{isRolls ? '/roll' : '/pcs'}</span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right text-gray-600">RM {bd.subtotal.toFixed(2)}</td>
+                    <td className="px-3 py-2.5 text-right font-bold text-blue-600">RM {bd.total.toFixed(2)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
