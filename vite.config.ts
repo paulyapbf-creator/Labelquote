@@ -6,25 +6,26 @@ import { readFileSync } from 'fs'
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
-function gitHash() {
-  try { return execSync('git rev-parse --short HEAD').toString().trim(); }
-  catch { return 'unknown'; }
-}
+// Load pre-stamped buildinfo (written by scripts/stamp.js before each push)
+let buildInfo = { version: pkg.version, hash: 'unknown', date: new Date().toISOString().slice(0, 10) };
+try {
+  const stamped = JSON.parse(readFileSync('./src/buildinfo.json', 'utf-8'));
+  buildInfo = { ...buildInfo, ...stamped };
+} catch { /* file not present, use defaults */ }
 
-function gitCommitCount() {
-  try { return execSync('git rev-list --count HEAD').toString().trim(); }
-  catch { return '0'; }
-}
-
-// Auto-version: major.minor from package.json, patch = git commit count
-const [major, minor] = pkg.version.split('.');
-const autoVersion = `${major}.${minor}.${gitCommitCount()}`;
+// Override with live git data when available (local dev)
+try {
+  buildInfo.hash = execSync('git rev-parse --short HEAD').toString().trim();
+  const count = execSync('git rev-list --count HEAD').toString().trim();
+  const [major, minor] = pkg.version.split('.');
+  buildInfo.version = `${major}.${minor}.${count}`;
+} catch { /* git not available, keep stamped values */ }
 
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(autoVersion),
-    __GIT_HASH__:    JSON.stringify(gitHash()),
-    __BUILD_DATE__:  JSON.stringify(new Date().toISOString().slice(0, 10)),
+    __APP_VERSION__: JSON.stringify(buildInfo.version),
+    __GIT_HASH__:    JSON.stringify(buildInfo.hash),
+    __BUILD_DATE__:  JSON.stringify(buildInfo.date),
   },
   plugins: [
     react(),
