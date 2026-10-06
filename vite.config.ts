@@ -11,9 +11,18 @@ function gitHash() {
   catch { return 'unknown'; }
 }
 
+function gitCommitCount() {
+  try { return execSync('git rev-list --count HEAD').toString().trim(); }
+  catch { return '0'; }
+}
+
+// Auto-version: major.minor from package.json, patch = git commit count
+const [major, minor] = pkg.version.split('.');
+const autoVersion = `${major}.${minor}.${gitCommitCount()}`;
+
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(autoVersion),
     __GIT_HASH__:    JSON.stringify(gitHash()),
     __BUILD_DATE__:  JSON.stringify(new Date().toISOString().slice(0, 10)),
   },
